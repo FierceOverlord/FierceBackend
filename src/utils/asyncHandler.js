@@ -4,6 +4,11 @@ const asyncHandler = (requestHandler) => (req, res, next) => {
 
 export { asyncHandler };
 
+
+
+
+
+
 // const asyncHandler = (fn) => aynsc (req, res, next) => {
 //     try {
 //         await fn(req, res, next)
