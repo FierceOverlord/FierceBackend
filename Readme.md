@@ -40,10 +40,12 @@ A clean folder structure is critical for maintainability. Here is the architectu
 * **Dotenv**: Configured to securely load environment variables (like API keys, DB URIs, and Secrets) from the `.env` file into `process.env`.
 * **Express Setup**: Instantiated the Express server in `app.js` and established the database connection in `index.js` before telling the app to listen.
 
-### Phase 3: Security & Middleware Utilities
+### Phase 3: Security & Global Middlewares
 * **CORS (Cross-Origin Resource Sharing)**: Configured to strictly control which frontend domains are permitted to request data from this API, preventing unauthorized access.
-* **Cookie-Parser**: Added to safely parse incoming HTTP cookies and set secure, HTTP-only cookies in the user's browser (vital for token storage).
-* **Standardized Responses**: Created custom `ApiError` and `ApiResponse` classes inside the `utils/` folder to guarantee that every API response (success or failure) follows the exact same predictable JSON format for frontend developers.
+* **Data Parsers (`express.json` & `express.urlencoded`)**: Intercepts and parses incoming JSON payloads and URL-encoded form data. Configured with a strict `16kb` limit to prevent server overload attacks.
+* **Static Files (`express.static`)**: Opened the `public` directory to temporarily host local files (like user avatars) during the upload pipeline.
+* **Cookie-Parser**: Added to safely parse incoming HTTP cookies and set secure, HTTP-only cookies in the user's browser (vital for storing JWTs securely).
+* **Standardized Responses**: Created custom `ApiError` and `ApiResponse` classes inside the `utils/` folder to guarantee that every API response follows the exact same predictable JSON format for frontend developers.
 
 ### Phase 4: Data Modeling & Features
 * **Schemas**: Created `user.model.js` and `video.model.js` to strictly define the shapes, validations, and rules for these database entities.
@@ -54,8 +56,15 @@ A clean folder structure is critical for maintainability. Here is the architectu
 * **JWT (JSON Web Tokens)**: Created custom schema methods to generate both an `AccessToken` (short-lived, required for accessing protected API routes) and a `RefreshToken` (long-lived, stored securely in the database and cookies to fetch new access tokens without requiring the user to re-log in).
 
 ### Phase 6: File Upload Pipeline
-* **Multer**: Configured as a middleware to intercept `multipart/form-data` requests and temporarily save uploaded files (like user avatars or large videos) locally on the server.
-* **Cloudinary**: Integrated the SDK to take the local files saved by Multer, push them to a robust cloud storage environment, return a public, shareable URL, and automatically delete the local temporary file from the server to save space.
+* **Multer**: Configured as a middleware to intercept `multipart/form-data` requests and temporarily save uploaded files locally on the server.
+* **Cloudinary**: Integrated the SDK to take the local files saved by Multer, push them to a robust cloud storage environment, return a public URL, and automatically delete the local temporary file to save server space.
 
 ---
+
+## 🚨 Troubleshooting & Common Pitfalls
+
+* **ECONNRESET / Postman Hanging on POST Requests:** If the server accepts a connection but hangs and dies, check your global middleware syntax in `app.js`. A simple typo like using a comma instead of a dot (e.g., `app.use(express, urlencoded)`) creates a middleware "black hole" that permanently stalls requests.
+* **Multer File Upload Crashes:** When configuring `multer.diskStorage`, you must explicitly import the built-in Node `path` module (`import path from "path";`) if you plan to use `path.extname()` to extract file extensions.
+* **Corrupted Database Passwords:** Always `await` asynchronous functions like `bcrypt.hash()` inside Mongoose `pre('save')` hooks. Failing to `await` will save a pending JavaScript `Promise` object to the database instead of the actual hashed string, permanently locking users out of their accounts.
+
 *This documentation will be continually updated as the project scales and introduces new features.*
