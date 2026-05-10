@@ -59,10 +59,15 @@ A clean folder structure is critical for maintainability. Here is the architectu
 * **Multer**: Configured as a middleware to intercept `multipart/form-data` requests and temporarily save uploaded files locally on the server.
 * **Cloudinary**: Integrated the SDK to take the local files saved by Multer, push them to a robust cloud storage environment, return a public URL, and automatically delete the local temporary file to save server space.
 
+
+### Phase 7: User Creation and Routing
+* **User Route and app.js**: Created a user.routes.js file, imported `Router` from express, controller and middleware. It Routes the user to the selected url page (e.g. register). The app js imports the rputer from user.routes.js, then use the `use` middleware on the app object which append the given url to actual url fro routing.
+*  **User Controller**: It registers user and uploads the data on the database. Imports the AsyncHandler, ApiError and ApiResponse files, Checks for various conditions before registering the user. Performs async/await to talk to database. Uploads the images on cloudinary. 
 ---
 
 ## 🚨 Troubleshooting & Common Pitfalls
 
+* **Async/Await, TAlking with database**: Give deep attention to use await with async. When talking to database if not, it'll show errors.
 * **ECONNRESET / Postman Hanging on POST Requests:** If the server accepts a connection but hangs and dies, check your global middleware syntax in `app.js`. A simple typo like using a comma instead of a dot (e.g., `app.use(express, urlencoded)`) creates a middleware "black hole" that permanently stalls requests.
 * **Multer File Upload Crashes:** When configuring `multer.diskStorage`, you must explicitly import the built-in Node `path` module (`import path from "path";`) if you plan to use `path.extname()` to extract file extensions.
 * **Corrupted Database Passwords:** Always `await` asynchronous functions like `bcrypt.hash()` inside Mongoose `pre('save')` hooks. Failing to `await` will save a pending JavaScript `Promise` object to the database instead of the actual hashed string, permanently locking users out of their accounts.
