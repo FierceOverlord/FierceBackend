@@ -1,7 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  destroyFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -25,6 +28,19 @@ const generateAccessAndRefreshTokens = async (userId) => {
       "Something went wrong, while generating refersh and access token"
     );
   }
+};
+
+const extractPublicId = (cloudinaryUrl) => {
+  if (!cloudinaryUrl) return null;
+
+  const afterUpload = cloudinaryUrl.split("/upload/")[1];
+  const pathParts = afterUpload.split("/");
+  pathParts.shift();
+  const publicIdWithExtension = pathParts.join("/");
+  return publicIdWithExtension.substring(
+    0,
+    publicIdWithExtension.lastIndexOf(".")
+  );
 };
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -288,6 +304,12 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading on avatar");
   }
 
+  const oldAvatarUrl = req.user?.avatar
+  if(oldAvatarUrl) {
+    const publicId = extractPublicId(oldAvatarUrl)
+    if(publicId) await destroyFromCloudinary(publicId)
+  }
+
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -299,33 +321,33 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   ).select("-password");
 
   return res
-  .status(200)
-  .json(new ApiResponse(200, user, "Avatar Updated Successfully"))
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar Updated Successfully"));
 });
 
-const updateUserCoverImage = asyncHandler(async(req,res) => {
-  const coverImageLocalPath = req.file?.path
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
 
-  if(!coverImageLocalPath) {
-    throw new ApiError(400, "Cover Image is missing")
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "Cover Image is missing");
   }
 
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
     {
       $set: {
         coverImage: coverImage.url,
-      }
+      },
     },
-    {new: true}
+    { new: true }
   ).select("-password");
 
   return res
-  .status(200)
-  .json(new ApiResponse(200, user, "Cover Image Updated Successfully"))
-})
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover Image Updated Successfully"));
+});
 
 export {
   registerUser,
@@ -336,5 +358,5 @@ export {
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
-  updateUserCoverImage
+  updateUserCoverImage,
 };
