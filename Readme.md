@@ -71,7 +71,7 @@ A clean folder structure is critical for maintainability. Here is the architectu
 
 ### Phase 9: Relational Data Modeling
 * **Subscriptions**: Created `subscription.model.js` to handle complex many-to-many relationships, tracking which `subscriber` (User) is following which `channel` (User).
-
+* **Get User Profile**: Created `getUserProfile` function in `user.controller.js` which fetched user data such as - fullname, username, subsribersCount, ChannelssubscribedToCount, isSubscribed, avatar, coverImage
 ---
 
 ## 🚨 Troubleshooting & Common Pitfalls
